@@ -1,8 +1,8 @@
-import * as fs from "fs";
+﻿import * as fs from "fs";
 import * as glob from "glob";
-import Parser = require("onec-syntaxparser");
 import * as path from "path";
 import * as vscode from "vscode";
+import Parser = require("onec-syntaxparser");
 
 import { IBslMethodValue, ILanguageInfo, IMethodValue } from "./IMethodValue";
 
@@ -17,11 +17,11 @@ export class Global {
     private dbsnippets: any;
     private languages: any;
 
-    private cacheUpdates: boolean;
+    private cacheUpdates: Map<string, boolean>;
 
     constructor(exec: string) {
         this.cache = new loki("gtags.json");
-        this.cacheUpdates = false;
+        this.cacheUpdates = new Map<string, boolean>();
     }
 
     public getCacheLocal(
@@ -46,12 +46,12 @@ export class Global {
         return search;
     }
 
-    public updateCache(): any {
-        this.cacheUpdates = true;
+    public updateCache(rootPath: string): any {
+        this.cacheUpdates.set(rootPath, true);
+        
         this.db = this.cache.addCollection("ValueTable");
         this.dbsnippets = this.cache.addCollection("Calls");
         this.languages = this.cache.addCollection("Languages");
-        const rootPath = vscode.workspace.rootPath;
 
         const pathsLibrarys: string[] =
             vscode.workspace.getConfiguration("gherkin-autocomplete")
@@ -60,7 +60,7 @@ export class Global {
             if (!(library.endsWith("/") || library.endsWith("\\"))) {
                 library += "/";
             }
-            library = path.resolve(vscode.workspace.rootPath, library);
+            library = path.resolve(rootPath, library);
             this.findFilesForUpdate(library, "Feature libraries cache is built.");
             this.findFilesBslForUpdate(library, "Bsl snippets search.");
             this.findFilesBslForUpdate(library, "OneScript snippets search.", true);
@@ -76,7 +76,7 @@ export class Global {
                 // default path is rootPath + ./features
                 featuresPath = "./features";
             }
-            featuresPath = path.resolve(vscode.workspace.rootPath, featuresPath);
+            featuresPath = path.resolve(rootPath, featuresPath);
             this.findFilesForUpdate(featuresPath, "Features' cache is built.");
             this.findFilesBslForUpdate(featuresPath, "Bsl snippets search.");
             this.findFilesBslForUpdate(featuresPath, "OneScript snippets search.", true);
@@ -88,7 +88,7 @@ export class Global {
             if (!(blspath.endsWith("/") || blspath.endsWith("\\"))) {
                 blspath += "/";
             }
-            blspath = path.resolve(vscode.workspace.rootPath, blspath);
+            blspath = path.resolve(rootPath, blspath);
             this.findFilesBslForUpdate(blspath, "Bsl snippets search.");
         }
     }
@@ -98,9 +98,13 @@ export class Global {
         this.addFileToCache(uri);
     }
 
-    public query(filename: string, word: string, all: boolean = true, lazy: boolean = false): any {
-        if (!this.cacheUpdates) {
-            this.updateCache();
+    public query(filename: vscode.Uri, word: string, all: boolean = true, lazy: boolean = false): any {
+        let rootFolder = vscode.workspace.getWorkspaceFolder(filename);
+        if (!rootFolder){
+            return new Array;
+        }
+        if (!this.cacheUpdates.get(rootFolder.uri.fsPath)) {
+            this.updateCache(rootFolder.uri.fsPath);
             return new Array();
         } else {
             const prefix = lazy ? "" : "^";
@@ -111,10 +115,12 @@ export class Global {
         }
     }
 
-    public queryAny(word: string): any {
-        if (!this.cacheUpdates) {
-            this.updateCache();
-            return new Array();
+    public queryAny(filename: vscode.Uri, word: string): any {
+        let rootFolder = vscode.workspace.getWorkspaceFolder(filename);
+        if (rootFolder){
+            if (!this.cacheUpdates.get(rootFolder.uri.fsPath)) {
+                this.updateCache(rootFolder.uri.fsPath);
+            }
         }
         const words = word.split(" ");
         const sb: string[] = new Array();
@@ -129,55 +135,65 @@ export class Global {
         return search;
     }
 
-    public querySnippet(word: string, all: boolean = true, lazy: boolean = false): any {
-        if (!this.cacheUpdates) {
-            this.updateCache();
-            return new Array();
-        } else {
-            const prefix = lazy ? "" : "^";
-            const suffix = all ? "" : "$";
-            const snipp = this.toSnippet(word);
-            const querystring = { snippet: { $regex: new RegExp(prefix + snipp + suffix, "i") } };
-            const search = this.db.chain().find(querystring).limit(15).simplesort("snippet").data();
-            return search;
-        }
-    }
-
-    public queryExportSnippet(word: string, all: boolean = true, lazy: boolean = false): any {
-        if (!this.cacheUpdates) {
-            this.updateCache();
-            return new Array();
-        } else {
-            const prefix = lazy ? "" : "^";
-            const suffix = all ? "" : "$";
-            const snipp = this.toSnippet(word);
-            const querystring = { snippet: { $regex: new RegExp(prefix + snipp + suffix, "i") } };
-            /*const querystring = { "$and" : [
-                { snippet: { $regex: new RegExp(prefix + snipp + suffix, "i") } },
-                {isexport: { '$eq' : true }}
-            ] };*/
-
-            function filterByExport(obj) {
-                return obj.isexport;
+    public querySnippet(filename: vscode.Uri, word: string, all: boolean = true, lazy: boolean = false): any {
+        let rootFolder = vscode.workspace.getWorkspaceFolder(filename);
+        if (rootFolder){
+            if (!this.cacheUpdates.get(rootFolder.uri.fsPath)) {
+                this.updateCache(rootFolder.uri.fsPath);
             }
-            const search = this.db.chain().find(querystring).where(filterByExport)
-                                .limit(15)
-                                .simplesort("snippet")
-                                .data();
-            return search;
         }
+        const prefix = lazy ? "" : "^";
+        const suffix = all ? "" : "$";
+        const snipp = this.toSnippet(word);
+        const querystring = { snippet: { $regex: new RegExp(prefix + snipp + suffix, "i") } };
+        const search = this.db.chain().find(querystring).limit(15).simplesort("snippet").data();
+        return search;
     }
-    public getLanguageInfo(filename: string): ILanguageInfo {
-        if (!this.cacheUpdates) {
-            this.updateCache();
-            const languageInfo: ILanguageInfo = {
-                language: "en",
-                name: filename,
-            };
+
+    public queryExportSnippet(filename: vscode.Uri, word: string, all: boolean = true, lazy: boolean = false): any {
+        let rootFolder = vscode.workspace.getWorkspaceFolder(filename);
+        if (rootFolder){
+            if (!this.cacheUpdates.get(rootFolder.uri.fsPath)) {
+                this.updateCache(rootFolder.uri.fsPath);
+            }
+        }
+        const prefix = lazy ? "" : "^";
+        const suffix = all ? "" : "$";
+        const snipp = this.toSnippet(word);
+        const querystring = { snippet: { $regex: new RegExp(prefix + snipp + suffix, "i") } };
+        /*const querystring = { "$and" : [
+            { snippet: { $regex: new RegExp(prefix + snipp + suffix, "i") } },
+            {isexport: { '$eq' : true }}
+        ] };*/
+
+        function filterByExport(obj) {
+            return obj.isexport;
+        };
+        const search = this.db.chain().find(querystring).where(filterByExport)
+                            .limit(15)
+                            .simplesort("snippet")
+                            .data();
+        return search;
+    
+    }
+    public getLanguageInfo(filename: vscode.Uri): ILanguageInfo {
+        
+        const languageInfo: ILanguageInfo = {
+            language: "en",
+            name: filename.fsPath,
+        };
+        
+        let rootFolder = vscode.workspace.getWorkspaceFolder(filename);
+        if (rootFolder){
+            if (!this.cacheUpdates.get(rootFolder.uri.fsPath)) {
+                this.updateCache(rootFolder.uri.fsPath);
+                return languageInfo;
+            }
+        } else {
             return languageInfo;
         }
-
-        return this.languages.findOne({ name: filename });
+        
+        return this.languages.findOne({ name: filename.fsPath });
     }
 
     public toSnippet(stringLine: string, getsnippet: boolean = true): string {
@@ -244,52 +260,6 @@ export class Global {
             vscode.window.setStatusBarMessage(successMessage, 3000);
         });
 
-    }
-
-    private fullNameRecursor(word: string, document: vscode.TextDocument, range: vscode.Range, left: boolean) {
-        let result: string;
-        let plus: number = 1;
-        let newRange: vscode.Range;
-        if (left) {
-            plus = -1;
-            if (range.start.character === 0) {
-                return word;
-            }
-            newRange = new vscode.Range(
-                new vscode.Position(range.start.line, range.start.character + plus),
-                new vscode.Position(range.start.line, range.start.character)
-            );
-        } else {
-            newRange = new vscode.Range(
-                new vscode.Position(range.end.line, range.end.character),
-                new vscode.Position(range.end.line, range.end.character + plus)
-            );
-        }
-        const dot = document.getText(newRange);
-        if (dot.endsWith(".")) {
-            let newPosition: vscode.Position;
-            if (left) {
-                const leftWordRange: vscode.Range = document.getWordRangeAtPosition(newRange.start);
-                result = document.getText(leftWordRange) + "." + word;
-                newPosition = new vscode.Position(leftWordRange.start.line, 0);
-                if (leftWordRange.start.character > 1) {
-                    newPosition = new vscode.Position(leftWordRange.start.line, leftWordRange.start.character - 2);
-                // } else {
-                //    newPosition = new vscode.Position(leftWordRange.start.line, 0);
-                }
-            } else {
-                result = word + "." + document.getText(document.getWordRangeAtPosition(newRange.start));
-                newPosition = new vscode.Position(newRange.end.line, newRange.end.character + 2);
-            }
-            const newWord = document.getWordRangeAtPosition(newPosition);
-            if (newWord) {
-                return this.fullNameRecursor(result, document, newWord, left);
-            }
-            return result;
-        } else {
-            result = word;
-            return result;
-        }
     }
 
     private addFileToCache(uri: vscode.Uri) {

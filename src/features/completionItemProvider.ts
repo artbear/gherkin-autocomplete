@@ -29,7 +29,8 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             const bucket = new Array<vscode.CompletionItem>();
             const textLine: vscode.TextLine = document.lineAt(position.line);
 
-            const filename = document.uri.fsPath;
+            
+            const filename = document.uri;
             let languageInfo = this._global.getLanguageInfo(filename);
             if (languageInfo == null) {
                 let gherkinDocument;
@@ -52,12 +53,12 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             const matches: boolean = TokenMatcher.match_StepLine(token);
 
             if (!matches) {
-                console.log("not mathed tocket for " + textLine.text);
+                console.log("not mathed tocken for " + textLine.text);
                 return resolve(bucket);
             }
 
             const word: string = token.matchedText;
-            const wordRange: vscode.Range = document.getWordRangeAtPosition(position);
+            const wordRange: vscode.Range | undefined = document.getWordRangeAtPosition(position);
             const wordcomplite: string = wordRange == null ? "" :
                 document.getText(
                     new vscode.Range(wordRange.start, position)
@@ -66,7 +67,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
 
             const snippet = this._global.toSnippet(word);
 
-            let result = this._global.queryExportSnippet(snippet);
+            let result = this._global.queryExportSnippet(filename, snippet);
             result.forEach((value, index, array) => {
                 const moduleDescription = "";
                 if (this.added[(moduleDescription + value.name).toLowerCase()] !== true) {
@@ -89,7 +90,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                 }
             });
 
-            result = this._global.getCacheLocal(filename, word, document.getText(), false);
+            result = this._global.getCacheLocal(filename.fsPath, word, document.getText(), false);
             result.forEach((value, index, array) => {
                 if (!this.added[value.name.toLowerCase()] === true) {
                     if (value.name === word) { return; }
@@ -109,7 +110,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                 }
             });
 
-            result = this._global.querySnippet(word);
+            result = this._global.querySnippet(filename, word);
             result.forEach((value, index, array) => {
                 const moduleDescription = "";
                 if (this.added[(moduleDescription + value.name).toLowerCase()] !== true) {
