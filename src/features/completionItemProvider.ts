@@ -66,8 +66,10 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             console.log("compiler for <" + word + "> - filter <" + wordcomplite + ">");
 
             const snippet = this._global.toSnippet(word);
+            const snippetFuzzy = this._global.toSnippet(word, false);
 
-            let result = this._global.queryExportSnippet(filename, snippet);
+            // let result = this._global.queryExportSnippet(filename, snippet);
+            let result = this._global.queryExportSnippet(filename, snippetFuzzy);
             result.forEach((value, index, array) => {
                 const moduleDescription = "";
                 if (this.added[(moduleDescription + value.name).toLowerCase()] !== true) {

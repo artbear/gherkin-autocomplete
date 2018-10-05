@@ -145,7 +145,14 @@ export class Global {
         const prefix = lazy ? "" : "^";
         const suffix = all ? "" : "$";
         const snipp = this.toSnippet(word);
-        const querystring = { snippet: { $regex: new RegExp(prefix + snipp + suffix, "i") } };
+        const snippFuzzy = this.toSnippet(word, false);
+        // const querystring = { snippet: { $regex: new RegExp(prefix + snipp + suffix, "i") } };
+        const snippFuzzyRegPattern = snippFuzzy.replace(/\s/g, ".*");
+        console.log("snippFuzzyRegPattern " + snippFuzzyRegPattern);
+        // const regPattern = prefix + "(" + snipp + ")|(" + snippFuzzyRegPattern + ")" + suffix;
+        const regPattern = "(" + snipp + ")|(" + snippFuzzyRegPattern + ")";
+        // const regPattern = prefix + "^(" + snipp + ")|(я\s+дела\s+б)$" + suffix;
+        const querystring = { snippet: { $regex: new RegExp(regPattern, "i") } };
         const search = this.db.chain().find(querystring).limit(15).simplesort("snippet").data();
         return search;
     }
