@@ -35,10 +35,10 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 
     updateCacheForAll(global);
-    
+
 }
 
-function updateCacheForAll(global) {
+function updateCacheForAll(global:any) {
 
     if (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length > 0) {
         vscode.workspace.workspaceFolders.forEach(element => {

@@ -9,7 +9,7 @@ const Token = require("./../../../node_modules/gherkin/lib/gherkin/token");
 const GherkinLine = require("./../../../node_modules/gherkin/lib/gherkin/gherkin_line");
 
 export default class GlobalCompletionItemProvider extends AbstractProvider implements vscode.CompletionItemProvider {
-    private added: object;
+    private added: object = {};
 
     // tslint:disable-next-line:max-line-length
     public resolveCompletionItem(item: vscode.CompletionItem, token: vscode.CancellationToken): vscode.CompletionItem | Thenable<vscode.CompletionItem> {
@@ -29,7 +29,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             const bucket = new Array<vscode.CompletionItem>();
             const textLine: vscode.TextLine = document.lineAt(position.line);
 
-            
+
             const filename = document.uri;
             let languageInfo = this._global.getLanguageInfo(filename);
             if (languageInfo == null) {
@@ -70,7 +70,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
 
             // let result = this._global.queryExportSnippet(filename, snippet);
             let result = this._global.queryExportSnippet(filename, snippetFuzzy);
-            result.forEach((value, index, array) => {
+            result.forEach((value: IMethodValue, index: any, array: any) => {
                 const moduleDescription = "";
                 if (this.added[(moduleDescription + value.name).toLowerCase()] !== true) {
                     const i = this.reverseIndex(snippet, value.name);
@@ -79,10 +79,10 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                     item.insertText = wordcomplite + value.name.substr(i + 1);
                     item.sortText = "3";
                     item.filterText = wordcomplite + value.snippet.toLowerCase() + " ";
-                    let startFilename = 0;
-                    if (value.filename.length - 60 > 0) {
-                        startFilename = value.filename.length - 60;
-                    }
+                    // let startFilename = 0;
+                    // if (value.filename.length - 60 > 0) {
+                    //     startFilename = value.filename.length - 60;
+                    // }
                     item.documentation = (value.description ? value.description : ""); // +
                     //                    "\n" + value.snippet + ":" + value.line;
                     item.kind = vscode.CompletionItemKind.Interface;
@@ -93,7 +93,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             });
 
             result = this._global.getCacheLocal(filename.fsPath, word, document.getText(), false);
-            result.forEach((value, index, array) => {
+            result.forEach((value: IMethodValue, index: any, array: any) => {
                 if (!this.added[value.name.toLowerCase()] === true) {
                     if (value.name === word) { return; }
 
@@ -113,7 +113,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             });
 
             result = this._global.querySnippet(filename, word);
-            result.forEach((value, index, array) => {
+            result.forEach((value: IMethodValue, index: any, array: any) => {
                 const moduleDescription = "";
                 if (this.added[(moduleDescription + value.name).toLowerCase()] !== true) {
                     const i = this.reverseIndex(snippet, value.name);
@@ -124,10 +124,10 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
 
                     item.filterText = wordcomplite + value.snippet.toLowerCase() + " ";
                     item.label = value.name;
-                    let startFilename = 0;
-                    if (value.filename.length - 60 > 0) {
-                        startFilename = value.filename.length - 60;
-                    }
+                    // let startFilename = 0;
+                    // if (value.filename.length - 60 > 0) {
+                    //     startFilename = value.filename.length - 60;
+                    // }
                     item.documentation = (value.description ? value.description : "");
                     item.kind = value.kind ? value.kind : vscode.CompletionItemKind.Field;
                     bucket.push(item);
@@ -160,7 +160,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
         const re = new RegExp(/^(<([^<]|<>)*>)/, "i");
         const reSpaces = new RegExp(/^\s/, "i");
         const reWord = new RegExp(/\w|[а-яїєґ]/, "i");
-        let wordIndex = 0;
+        // let wordIndex = 0;
         while (i < indexString) {
             const offsetObj: IObjOffset = {
                 index: i,
@@ -183,7 +183,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                 i = offsetObj.index;
                 offsetBase = offsetObj.offset;
             }
-            wordIndex = i;
+            // wordIndex = i;
             const char = snippet.charAt(i).toLowerCase();
             const baseStr = fullSnippetString.charAt(i + offsetBase).toLowerCase();
             if (char === baseStr) {
