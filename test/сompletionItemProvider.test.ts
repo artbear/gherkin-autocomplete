@@ -6,9 +6,9 @@ import { addText, clearActiveTextEditor, fixturePath, insertCursorAtEndOfFile, n
     TextBackuper } from "./helpers";
 
 import { Global } from "../src/global";
-// import * as vscAdapter from "../src/vscAdapter";
+import * as vscAdapter from "../src/vscAdapter";
 
-// const globals = Global.create(vscAdapter);
+const globals = Global.create(vscAdapter);
 
 let textDocument: vscode.TextDocument;
 
@@ -33,10 +33,10 @@ describe("Completion", function() {
     this._backuper = new TextBackuper();
 
     before(async () => {
-        const uriEmptyFile = vscode.Uri.file(path.join(fixturePath, "test.feature"));
+        const uriEmptyFile = vscode.Uri.file(path.join(fixturePath, "test", "test.feature"));
         textDocument = await newTextDocument(uriEmptyFile);
         await this._backuper.save();
-        // await globals.waitForCacheUpdate();
+        await globals.waitForCacheUpdate();
     });
 
     beforeEach(async () => {
@@ -48,19 +48,39 @@ describe("Completion", function() {
     });
 
     // Defines a Mocha unit test
-    it("should show global functions", async () => {
+    it("should show completions list for fuzzy eq", async () => {
 
-        await addText(" я выв");
+        await addText(" консол");
 
         const completionList = await getCompletionListFromCurrentPosition();
         const completions = completionList.items;
 
         completions.should.have.length(1, "wrong completions length");
+        // completions.length.should.be.aboveOrEqual(3, "wrong completions length");
 
-        // const messageFunction = completions[0];
-        // messageFunction.label.should.be.equal("Сообщить");
+        const messageFunction = completions[0];
+        messageFunction.label.should.be.equal("я вижу консоль", "label");
+        messageFunction.kind.should.be.equal(vscode.CompletionItemKind.Module);
         // messageFunction.kind.should.be.equal(vscode.CompletionItemKind.Function);
-        // messageFunction.insertText.should.be.equal("Сообщить(");
+        messageFunction.insertText.should.be.equal("я вижу консоль", "insertText");
+
+    });
+
+    it("should show completions list for left eq", async () => {
+
+        await addText(" я вижу");
+
+        const completionList = await getCompletionListFromCurrentPosition();
+        const completions = completionList.items;
+
+        completions.should.have.length(1, "wrong completions length");
+        // completions.length.should.be.aboveOrEqual(3, "wrong completions length");
+
+        const messageFunction = completions[0];
+        messageFunction.label.should.be.equal("я вижу консоль", "label");
+        messageFunction.kind.should.be.equal(vscode.CompletionItemKind.Module);
+        // messageFunction.kind.should.be.equal(vscode.CompletionItemKind.Function);
+        messageFunction.insertText.should.be.equal("я вижу консоль", "insertText");
 
     });
 

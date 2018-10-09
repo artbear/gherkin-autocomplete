@@ -120,7 +120,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                     const item = new vscode.CompletionItem(value.name);
                     item.insertText = value.name; // value.name.substr(word.length);
                     item.sortText = "0";
-                    item.insertText = wordcomplite + value.name.substr(i + 1);
+                    item.insertText = wordcomplite + value.name.substr(i + 1);//TODO вставляет неверно
 
                     item.filterText = wordcomplite + value.snippet.toLowerCase() + " ";
                     item.label = value.name;

@@ -12,16 +12,30 @@ const parser = new Gherkin.Parser();
 const loki = require("lokijs");
 
 export class Global {
+    public static create(adapter?: any): Global {
+        if (!Global.instance) {
+            Global.instance = new Global(adapter);
+        }
+        return Global.instance;
+    }
+
+    private static instance: Global;
+
     private cache: any;
     private db: any;
     private dbsnippets: any;
     private languages: any;
 
     private cacheUpdates: Map<string, boolean>;
+    private allCacheUpdated: boolean;
 
-    constructor(exec: string) {
+    constructor(adapter?: any) {
         this.cache = new loki("gtags.json");
         this.cacheUpdates = new Map<string, boolean>();
+
+        if (adapter) {
+            this.redefineMethods(adapter);
+        }
     }
 
     public getCacheLocal(
@@ -46,9 +60,20 @@ export class Global {
         return search;
     }
 
+    public updateCacheForAll() {
+        this.allCacheUpdated = false;
+        if (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length > 0) {
+            vscode.workspace.workspaceFolders.forEach((element) => {
+                this.updateCache(element.uri.fsPath);
+            });
+
+        }
+        this.allCacheUpdated = true;
+    }
+
     public updateCache(rootPath: string): any {
         this.cacheUpdates.set(rootPath, true);
-        
+
         this.db = this.cache.addCollection("ValueTable");
         this.dbsnippets = this.cache.addCollection("Calls");
         this.languages = this.cache.addCollection("Languages");
@@ -181,15 +206,15 @@ export class Global {
                             .simplesort("snippet")
                             .data();
         return search;
-    
+
     }
     public getLanguageInfo(filename: vscode.Uri): ILanguageInfo {
-        
+
         const languageInfo: ILanguageInfo = {
             language: "en",
             name: filename.fsPath,
         };
-        
+
         let rootFolder = vscode.workspace.getWorkspaceFolder(filename);
         if (rootFolder){
             if (!this.cacheUpdates.get(rootFolder.uri.fsPath)) {
@@ -199,7 +224,7 @@ export class Global {
         } else {
             return languageInfo;
         }
-        
+
         return this.languages.findOne({ name: filename.fsPath });
     }
 
@@ -218,6 +243,45 @@ export class Global {
         }
         return result;
     }
+
+    public async waitForCacheUpdate() {
+        while (!this.cacheUpdated()) {
+            await this.delay(100);
+        }
+    }
+
+    public redefineMethods(adapter) {
+        const methodsList = [
+            "postMessage",
+            "getConfiguration",
+            "getConfigurationKey",
+            "getRootPath"
+            // ,
+            // "fullNameRecursor",
+            // "findFilesForCache"
+        ];
+        methodsList.forEach((element) => {
+            if (adapter.hasOwnProperty(element)) {
+                this[element] = adapter[element];
+            }
+        });
+    }
+
+    public postMessage(_description: string, _interval?: number) { } // tslint:disable-line:no-empty
+
+    public getConfiguration(_section: string): any { } // tslint:disable-line:no-empty
+
+    public getConfigurationKey(_configuration, _key: string): any { } // tslint:disable-line:no-empty
+
+    public getRootPath(): string {
+        return "";
+    }
+
+    // public fullNameRecursor(_word: string, _document, _range, _left: boolean): string {
+    //     return "";
+    // }
+
+    // public findFilesForCache(_searchPattern: string, _rootPath: string) { } // tslint:disable-line:no-empty
 
     private findFilesForUpdate(library: string, successMessage: string): void {
         const globOptions: glob.IOptions = {};
@@ -425,5 +489,15 @@ export class Global {
         }
 
         return methods;
+    }
+
+    private delay(milliseconds: number) {
+        return new Promise<void>((resolve) => {
+            setTimeout(resolve, milliseconds);
+        });
+    }
+
+    private cacheUpdated(): boolean {
+        return this.allCacheUpdated;
     }
 }
