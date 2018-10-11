@@ -20,7 +20,8 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
     public provideCompletionItems(
         document: vscode.TextDocument,
         position: vscode.Position,
-        cansellationToken: vscode.CancellationToken): Thenable<vscode.CompletionItem[]> {
+        cansellationToken: vscode.CancellationToken,
+        context: vscode.CompletionContext): Thenable<vscode.CompletionItem[]> {
 
         this.added = {};
 
@@ -53,11 +54,14 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             const matches: boolean = TokenMatcher.match_StepLine(token);
 
             if (!matches) {
-                console.log("not mathed tocken for " + textLine.text);
+                console.log("not mathed token for " + textLine.text);
                 return resolve(bucket);
             }
 
             const word: string = token.matchedText;
+            const startPos = new vscode.Position(position.line, token.matchedKeyword.length); //position.character - word.length);
+            const replaceRange = new vscode.Range(startPos, position);
+
             const wordRange: vscode.Range | undefined = document.getWordRangeAtPosition(position);
             const wordcomplite: string = wordRange == null ? "" :
                 document.getText(
@@ -75,10 +79,11 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                 if (this.added[(moduleDescription + value.name).toLowerCase()] !== true) {
                     const i = this.reverseIndex(snippet, value.name);
                     const item = new vscode.CompletionItem(value.name);
+                    item.range = replaceRange;
                     item.insertText = value.name;
                     item.insertText = wordcomplite + value.name.substr(i + 1);
                     item.sortText = "3";
-                    item.filterText = wordcomplite + value.snippet.toLowerCase() + " ";
+                    item.filterText = value.name; //wordcomplite + value.snippet.toLowerCase() + " ";
                     // let startFilename = 0;
                     // if (value.filename.length - 60 > 0) {
                     //     startFilename = value.filename.length - 60;
@@ -102,6 +107,8 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                     item.sortText = "0";
                     item.insertText = wordcomplite + value.name.substr(i + 1);
                     // item.filterText = wordcomplite + value.snippet.toLowerCase() + " ";
+                    item.filterText = value.name;
+                    item.range = replaceRange;
 
                     item.documentation = value.description ? value.description : "";
                     item.kind = vscode.CompletionItemKind.Function;
@@ -112,7 +119,8 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                 }
             });
 
-            result = this._global.querySnippet(filename, word);
+            result = this._global.querySnippet(filename, snippetFuzzy);
+            // result = this._global.querySnippet(filename, word);
             result.forEach((value: IMethodValue, index: any, array: any) => {
                 const moduleDescription = "";
                 if (this.added[(moduleDescription + value.name).toLowerCase()] !== true) {
@@ -120,9 +128,11 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                     const item = new vscode.CompletionItem(value.name);
                     item.insertText = value.name; // value.name.substr(word.length);
                     item.sortText = "0";
-                    item.insertText = wordcomplite + value.name.substr(i + 1);//TODO вставляет неверно
+                    // item.insertText = value.name.substr(i + 1);
+                    // item.insertText = wordcomplite + value.name.substr(i + 1);//TODO вставляет неверно
+                    item.range = replaceRange;
 
-                    item.filterText = wordcomplite + value.snippet.toLowerCase() + " ";
+                    item.filterText = value.name; //wordcomplite + value.snippet.toLowerCase() + " ";
                     item.label = value.name;
                     // let startFilename = 0;
                     // if (value.filename.length - 60 > 0) {
@@ -136,7 +146,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             });
             resolve(bucket);
 
-            return; // resolve(bucket);
+            return;
         });
     }
 

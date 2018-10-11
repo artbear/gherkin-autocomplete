@@ -29,7 +29,7 @@ async function getCompletionListFromCurrentPosition(): Promise<vscode.Completion
 describe("Completion", function() {
     _backuper: TextBackuper;
 
-    this.timeout(50000);
+    this.timeout(15000);
     this._backuper = new TextBackuper();
 
     before(async () => {
@@ -50,37 +50,64 @@ describe("Completion", function() {
     // Defines a Mocha unit test
     it("should show completions list for fuzzy eq", async () => {
 
-        await addText(" консол");
+        const addedText = " консол";
+        await addText(addedText);
+        const position = vscode.window.activeTextEditor.selection.anchor;
 
         const completionList = await getCompletionListFromCurrentPosition();
         const completions = completionList.items;
 
         completions.should.have.length(1, "wrong completions length");
-        // completions.length.should.be.aboveOrEqual(3, "wrong completions length");
 
-        const messageFunction = completions[0];
-        messageFunction.label.should.be.equal("я вижу консоль", "label");
-        messageFunction.kind.should.be.equal(vscode.CompletionItemKind.Module);
-        // messageFunction.kind.should.be.equal(vscode.CompletionItemKind.Function);
-        messageFunction.insertText.should.be.equal("я вижу консоль", "insertText");
+        const item = completions[0];
+        item.label.should.be.equal("я вижу консоль", "label");
+        item.kind.should.be.equal(vscode.CompletionItemKind.Module);
+        item.insertText.should.be.equal("я вижу консоль", "insertText");
+        item.filterText.should.be.equal("я вижу консоль", "filterText");
+        item.range.start.character.should.be.equal(2, "range.start.character");
+        item.range.end.character.should.be.equal(position.character, "range.end.character");
 
     });
 
     it("should show completions list for left eq", async () => {
 
-        await addText(" я вижу");
+        const addedText = " я вижу";
+        await addText(addedText);
+        const position = vscode.window.activeTextEditor.selection.anchor;
 
         const completionList = await getCompletionListFromCurrentPosition();
         const completions = completionList.items;
 
         completions.should.have.length(1, "wrong completions length");
-        // completions.length.should.be.aboveOrEqual(3, "wrong completions length");
 
-        const messageFunction = completions[0];
-        messageFunction.label.should.be.equal("я вижу консоль", "label");
-        messageFunction.kind.should.be.equal(vscode.CompletionItemKind.Module);
-        // messageFunction.kind.should.be.equal(vscode.CompletionItemKind.Function);
-        messageFunction.insertText.should.be.equal("я вижу консоль", "insertText");
+        const item = completions[0];
+        item.label.should.be.equal("я вижу консоль", "label");
+        item.kind.should.be.equal(vscode.CompletionItemKind.Module);
+        item.insertText.should.be.equal("я вижу консоль", "insertText");
+        item.filterText.should.be.equal("я вижу консоль", "filterText");
+        item.range.start.character.should.be.equal(2, "range.start.character");
+        item.range.end.character.should.be.equal(position.character, "range.end.character");
+
+    });
+
+    it("should show completions list for full eq", async () => {
+
+        const addedText = " я вижу консоль";
+        await addText(addedText);
+        const position = vscode.window.activeTextEditor.selection.anchor;
+
+        const completionList = await getCompletionListFromCurrentPosition();
+        const completions = completionList.items;
+
+        completions.should.have.length(1, "wrong completions length");
+
+        const item = completions[0];
+        item.label.should.be.equal("я вижу консоль", "label");
+        item.kind.should.be.equal(vscode.CompletionItemKind.Module);
+        item.insertText.should.be.equal("я вижу консоль", "insertText");
+        item.filterText.should.be.equal("я вижу консоль", "filterText");
+        item.range.start.character.should.be.equal(2, "range.start.character");
+        item.range.end.character.should.be.equal(position.character, "range.end.character");
 
     });
 
