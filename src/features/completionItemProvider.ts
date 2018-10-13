@@ -171,30 +171,23 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
         const re = new RegExp(/^(<([^<]|<>)*>)/, "i");
         const reSpaces = new RegExp(/^\s/, "i");
         const reWord = new RegExp(/\w|[а-яїєґ]/, "i");
-        // let wordIndex = 0;
         while (i < indexString) {
             const offsetObj: IObjOffset = {
                 index: i,
                 offset: offsetBase
             };
             while (
-                // tslint:disable-next-line:max-line-length
-                (reWord.exec(fullSnippetString.charAt(offsetObj.index + offsetObj.offset)) == null) || (offsetObj.index + offsetObj.offset >= indexFull)
+                (reWord.exec(fullSnippetString.charAt(offsetObj.index + offsetObj.offset)) == null)
+                || (offsetObj.index + offsetObj.offset >= indexFull)
                 ) {
-                let str = this.addOffset(fullSnippetString.substr(
-                        offsetObj.index + offsetObj.offset), reSpaces, offsetObj);
-                str = this.addOffset(fullSnippetString.substr(
-                        offsetObj.index + offsetObj.offset), re3Quotes, offsetObj);
-                str = this.addOffset(fullSnippetString.substr(
-                        offsetObj.index + offsetObj.offset), re1Quotes, offsetObj);
-                str = this.addOffset(fullSnippetString.substr(
-                    offsetObj.index + offsetObj.offset), re2Quotes, offsetObj);
-                str = this.addOffset(fullSnippetString.substr(
-                    offsetObj.index + offsetObj.offset), re, offsetObj);
+                [reSpaces, re3Quotes, re1Quotes, re2Quotes, re].forEach((regElement) => {
+                    this.addOffset(fullSnippetString.substr(
+                        offsetObj.index + offsetObj.offset), regElement, offsetObj);
+                });
                 i = offsetObj.index;
                 offsetBase = offsetObj.offset;
             }
-            // wordIndex = i;
+
             const char = snippet.charAt(i).toLowerCase();
             const baseStr = fullSnippetString.charAt(i + offsetBase).toLowerCase();
             if (char === baseStr) {
