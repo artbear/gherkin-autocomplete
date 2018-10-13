@@ -1,8 +1,8 @@
 ﻿import * as fs from "fs";
 import * as glob from "glob";
+import Parser = require("onec-syntaxparser");
 import * as path from "path";
 import * as vscode from "vscode";
-import Parser = require("onec-syntaxparser");
 
 import { IBslMethodValue, ILanguageInfo, IMethodValue } from "./IMethodValue";
 
@@ -78,43 +78,47 @@ export class Global {
         this.dbsnippets = this.cache.addCollection("Calls");
         this.languages = this.cache.addCollection("Languages");
 
-        const pathsLibrarys: string[] =
-            vscode.workspace.getConfiguration("gherkin-autocomplete")
-                .get<string[]>("featureLibraries", []);
-        for (let library of pathsLibrarys) {
-            if (!(library.endsWith("/") || library.endsWith("\\"))) {
-                library += "/";
-            }
-            library = path.resolve(rootPath, library);
-            this.findFilesForUpdate(library, "Feature libraries cache is built.");
-            this.findFilesBslForUpdate(library, "Bsl snippets search.");
-            this.findFilesBslForUpdate(library, "OneScript snippets search.", true);
-        }
-
-        if (rootPath) {
-            let featuresPath = String(vscode.workspace.getConfiguration("gherkin-autocomplete").get("featuresPath"));
-            if (featuresPath) {
-                if (!(featuresPath.endsWith("/") || featuresPath.endsWith("\\"))) {
-                    featuresPath += "/";
+        const config = this.getProductConfiguration();
+        if (config) {
+            const pathsLibrarys: string[] = config.get<string[]>("featureLibraries", []);
+                // vscode.workspace.getConfiguration("gherkin-autocomplete")
+                // get<string[]>("featureLibraries", []);
+            for (let library of pathsLibrarys) {
+                if (!(library.endsWith("/") || library.endsWith("\\"))) {
+                    library += "/";
                 }
-            } else {
-                // default path is rootPath + ./features
-                featuresPath = "./features";
+                library = path.resolve(rootPath, library);
+                this.findFilesForUpdate(library, "Feature libraries cache is built.");
+                this.findFilesBslForUpdate(library, "Bsl snippets search.");
+                this.findFilesBslForUpdate(library, "OneScript snippets search.", true);
             }
-            featuresPath = path.resolve(rootPath, featuresPath);
-            this.findFilesForUpdate(featuresPath, "Features' cache is built.");
-            this.findFilesBslForUpdate(featuresPath, "Bsl snippets search.");
-            this.findFilesBslForUpdate(featuresPath, "OneScript snippets search.", true);
-        }
 
-        const bslsPaths: string[] = vscode.workspace.getConfiguration("gherkin-autocomplete")
-                        .get<string[]>("srcBslPath", []);
-        for (let blspath of bslsPaths) {
-            if (!(blspath.endsWith("/") || blspath.endsWith("\\"))) {
-                blspath += "/";
+            if (rootPath) {
+                // let featuresPath = String(vscode.workspace.getConfiguration("gherkin-autocomplete").get("featuresPath"));
+                let featuresPath = String(config.get("featuresPath"));
+                if (featuresPath) {
+                    if (!(featuresPath.endsWith("/") || featuresPath.endsWith("\\"))) {
+                        featuresPath += "/";
+                    }
+                } else {
+                    // default path is rootPath + ./features
+                    featuresPath = "./features";
+                }
+                featuresPath = path.resolve(rootPath, featuresPath);
+                this.findFilesForUpdate(featuresPath, "Features' cache is built.");
+                this.findFilesBslForUpdate(featuresPath, "Bsl snippets search.");
+                this.findFilesBslForUpdate(featuresPath, "OneScript snippets search.", true);
             }
-            blspath = path.resolve(rootPath, blspath);
-            this.findFilesBslForUpdate(blspath, "Bsl snippets search.");
+
+            // const bslsPaths: string[] = vscode.workspace.getConfiguration("gherkin-autocomplete")
+            const bslsPaths: string[] = config.get<string[]>("srcBslPath", []);
+            for (let blspath of bslsPaths) {
+                if (!(blspath.endsWith("/") || blspath.endsWith("\\"))) {
+                    blspath += "/";
+                }
+                blspath = path.resolve(rootPath, blspath);
+                this.findFilesBslForUpdate(blspath, "Bsl snippets search.");
+            }
         }
     }
 
@@ -124,9 +128,9 @@ export class Global {
     }
 
     public query(filename: vscode.Uri, word: string, all: boolean = true, lazy: boolean = false): any {
-        let rootFolder = vscode.workspace.getWorkspaceFolder(filename);
-        if (!rootFolder){
-            return new Array;
+        const rootFolder = vscode.workspace.getWorkspaceFolder(filename);
+        if (!rootFolder) {
+            return new Array();
         }
         if (!this.cacheUpdates.get(rootFolder.uri.fsPath)) {
             this.updateCache(rootFolder.uri.fsPath);
@@ -141,11 +145,9 @@ export class Global {
     }
 
     public queryAny(filename: vscode.Uri, word: string): any {
-        let rootFolder = vscode.workspace.getWorkspaceFolder(filename);
-        if (rootFolder){
-            if (!this.cacheUpdates.get(rootFolder.uri.fsPath)) {
-                this.updateCache(rootFolder.uri.fsPath);
-            }
+        const rootFolder = vscode.workspace.getWorkspaceFolder(filename);
+        if (rootFolder && !this.cacheUpdates.get(rootFolder.uri.fsPath)) {
+            this.updateCache(rootFolder.uri.fsPath);
         }
         const words = word.split(" ");
         const sb: string[] = new Array();
@@ -161,11 +163,9 @@ export class Global {
     }
 
     public querySnippet(filename: vscode.Uri, word: string, all: boolean = true, lazy: boolean = false): any {
-        let rootFolder = vscode.workspace.getWorkspaceFolder(filename);
-        if (rootFolder){
-            if (!this.cacheUpdates.get(rootFolder.uri.fsPath)) {
-                this.updateCache(rootFolder.uri.fsPath);
-            }
+        const rootFolder = vscode.workspace.getWorkspaceFolder(filename);
+        if (rootFolder && !this.cacheUpdates.get(rootFolder.uri.fsPath)) {
+            this.updateCache(rootFolder.uri.fsPath);
         }
         const prefix = lazy ? "" : "^";
         const suffix = all ? "" : "$";
@@ -183,11 +183,9 @@ export class Global {
     }
 
     public queryExportSnippet(filename: vscode.Uri, word: string, all: boolean = true, lazy: boolean = false): any {
-        let rootFolder = vscode.workspace.getWorkspaceFolder(filename);
-        if (rootFolder){
-            if (!this.cacheUpdates.get(rootFolder.uri.fsPath)) {
-                this.updateCache(rootFolder.uri.fsPath);
-            }
+        const rootFolder = vscode.workspace.getWorkspaceFolder(filename);
+        if (rootFolder && !this.cacheUpdates.get(rootFolder.uri.fsPath)) {
+            this.updateCache(rootFolder.uri.fsPath);
         }
         const prefix = lazy ? "" : "^";
         const suffix = all ? "" : "$";
@@ -200,7 +198,7 @@ export class Global {
 
         function filterByExport(obj) {
             return obj.isexport;
-        };
+        }
         const search = this.db.chain().find(querystring).where(filterByExport)
                             .limit(15)
                             .simplesort("snippet")
@@ -215,8 +213,8 @@ export class Global {
             name: filename.fsPath,
         };
 
-        let rootFolder = vscode.workspace.getWorkspaceFolder(filename);
-        if (rootFolder){
+        const rootFolder = vscode.workspace.getWorkspaceFolder(filename);
+        if (rootFolder) {
             if (!this.cacheUpdates.get(rootFolder.uri.fsPath)) {
                 this.updateCache(rootFolder.uri.fsPath);
                 return languageInfo;
@@ -256,9 +254,7 @@ export class Global {
             "getConfiguration",
             "getConfigurationKey",
             "getRootPath"
-            // ,
-            // "fullNameRecursor",
-            // "findFilesForCache"
+            // , "findFilesForCache"
         ];
         methodsList.forEach((element) => {
             if (adapter.hasOwnProperty(element)) {
@@ -267,19 +263,19 @@ export class Global {
         });
     }
 
-    public postMessage(_description: string, _interval?: number) { } // tslint:disable-line:no-empty
+    public postMessage(description: string, interval?: number) { } // tslint:disable-line:no-empty
 
-    public getConfiguration(_section: string): any { } // tslint:disable-line:no-empty
+    public getConfiguration(section: string): vscode.WorkspaceConfiguration | undefined { return undefined; }
 
-    public getConfigurationKey(_configuration, _key: string): any { } // tslint:disable-line:no-empty
+    public getConfigurationKey(configuration, key: string): any { } // tslint:disable-line:no-empty
 
     public getRootPath(): string {
         return "";
     }
 
-    // public fullNameRecursor(_word: string, _document, _range, _left: boolean): string {
-    //     return "";
-    // }
+    private getProductConfiguration(): vscode.WorkspaceConfiguration | undefined {
+        return this.getConfiguration("gherkin-autocomplete");
+    }
 
     // public findFilesForCache(_searchPattern: string, _rootPath: string) { } // tslint:disable-line:no-empty
 
@@ -366,20 +362,20 @@ export class Global {
 
         const descrMethodEntries = methodsTable.findOne(
                 { isexport : { $eq : true }, name : descrMethod });
-        if(descrMethodEntries){
+        if (descrMethodEntries) {
 
-            let stepnames = new Array();
-            var matches;
+            const stepnames = new Array();
+            let matches;
             while ((matches = re.exec(source)) !== null) {
                 stepnames.push(matches[1]);
             }
 
             const entries = methodsTable.find(
-                { isexport : { $eq : true }, name: { $in :stepnames }}); //TODO нужно ли сравнивать с учетом регистра?
+                { isexport : { $eq : true }, name: { $in : stepnames }}); // TODO нужно ли сравнивать с учетом регистра?
             return entries;
-        }
-        else
+        } else {
             return [];
+        }
     }
 
     private addSnippetsToCache(uri: vscode.Uri, findOneScript?: boolean) {

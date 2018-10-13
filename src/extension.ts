@@ -24,7 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand("gherkin-autocomplete.update", () => {
         global.updateCacheForAll();
-        //vscode.commands.executeCommand("vscode.executeReferenceProvider", )
+        // vscode.commands.executeCommand("vscode.executeReferenceProvider", )
     }));
 
     context.subscriptions.push(
