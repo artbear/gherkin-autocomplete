@@ -30,7 +30,6 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             const bucket = new Array<vscode.CompletionItem>();
             const textLine: vscode.TextLine = document.lineAt(position.line);
 
-
             const filename = document.uri;
             let languageInfo = this._global.getLanguageInfo(filename);
             if (languageInfo == null) {
@@ -59,7 +58,8 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             }
 
             const word: string = token.matchedText;
-            const startPos = new vscode.Position(position.line, token.matchedKeyword.length); //position.character - word.length);
+            // const startPos = new vscode.Position(position.line, position.character - word.length);
+            const startPos = new vscode.Position(position.line, token.matchedKeyword.length);
             const replaceRange = new vscode.Range(startPos, position);
 
             const wordRange: vscode.Range | undefined = document.getWordRangeAtPosition(position);
@@ -83,7 +83,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                     item.insertText = value.name;
                     item.insertText = wordcomplite + value.name.substr(i + 1);
                     item.sortText = "3";
-                    item.filterText = value.name; //wordcomplite + value.snippet.toLowerCase() + " ";
+                    item.filterText = value.name; // wordcomplite + value.snippet.toLowerCase() + " ";
                     // let startFilename = 0;
                     // if (value.filename.length - 60 > 0) {
                     //     startFilename = value.filename.length - 60;
@@ -132,13 +132,14 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                     // item.insertText = wordcomplite + value.name.substr(i + 1);//TODO вставляет неверно
                     item.range = replaceRange;
 
-                    item.filterText = value.name; //wordcomplite + value.snippet.toLowerCase() + " ";
+                    item.filterText = value.name; // wordcomplite + value.snippet.toLowerCase() + " ";
                     item.label = value.name;
                     // let startFilename = 0;
                     // if (value.filename.length - 60 > 0) {
                     //     startFilename = value.filename.length - 60;
                     // }
                     item.documentation = (value.description ? value.description : "");
+                    item.documentation = (value.filename ? "\nFeature: " + value.filename : "");
                     item.kind = value.kind ? value.kind : vscode.CompletionItemKind.Field;
                     bucket.push(item);
                     this.added[(moduleDescription + value.name).toLowerCase()] = true;
