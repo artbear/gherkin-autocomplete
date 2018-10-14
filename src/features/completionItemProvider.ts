@@ -58,7 +58,6 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             }
 
             const word: string = token.matchedText;
-            // const startPos = new vscode.Position(position.line, position.character - word.length);
             const startPos = new vscode.Position(position.line, token.matchedKeyword.length);
             const replaceRange = new vscode.Range(startPos, position);
 
@@ -106,8 +105,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                     const item = new vscode.CompletionItem(value.name);
                     item.sortText = "0";
                     item.insertText = wordcomplite + value.name.substr(i + 1);
-                    // item.filterText = wordcomplite + value.snippet.toLowerCase() + " ";
-                    item.filterText = value.name;
+                    item.filterText = value.name; // wordcomplite + value.snippet.toLowerCase() + " ";
                     item.range = replaceRange;
 
                     item.documentation = value.description ? value.description : "";
