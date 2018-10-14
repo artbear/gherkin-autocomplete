@@ -128,27 +128,20 @@ export class Global {
     }
 
     public query(filename: vscode.Uri, word: string, all: boolean = true, lazy: boolean = false): any {
-        const rootFolder = vscode.workspace.getWorkspaceFolder(filename);
-        if (!rootFolder) {
+        if (!this.updateCacheIfNotUpdatedYet(filename)) {
             return new Array();
         }
-        if (!this.cacheUpdates.get(rootFolder.uri.fsPath)) {
-            this.updateCache(rootFolder.uri.fsPath);
-            return new Array();
-        } else {
-            const prefix = lazy ? "" : "^";
-            const suffix = all ? "" : "$";
-            const querystring = { name: { $regex: new RegExp(prefix + word + suffix, "i") } };
-            const search = this.db.chain().find(querystring).limit(50).simplesort("name").data();
-            return search;
-        }
+
+        const prefix = lazy ? "" : "^";
+        const suffix = all ? "" : "$";
+        const querystring = { name: { $regex: new RegExp(prefix + word + suffix, "i") } };
+        const search = this.db.chain().find(querystring).limit(50).simplesort("name").data();
+        return search;
     }
 
     public queryAny(filename: vscode.Uri, word: string): any {
-        const rootFolder = vscode.workspace.getWorkspaceFolder(filename);
-        if (rootFolder && !this.cacheUpdates.get(rootFolder.uri.fsPath)) {
-            this.updateCache(rootFolder.uri.fsPath);
-        }
+        this.updateCacheIfNotUpdatedYet(filename);
+
         const words = word.split(" ");
         const sb: string[] = new Array();
         words.forEach((element) => {
@@ -163,10 +156,8 @@ export class Global {
     }
 
     public querySnippet(filename: vscode.Uri, word: string, all: boolean = true, lazy: boolean = false): any {
-        const rootFolder = vscode.workspace.getWorkspaceFolder(filename);
-        if (rootFolder && !this.cacheUpdates.get(rootFolder.uri.fsPath)) {
-            this.updateCache(rootFolder.uri.fsPath);
-        }
+        this.updateCacheIfNotUpdatedYet(filename);
+
         const prefix = lazy ? "" : "^";
         const suffix = all ? "" : "$";
         const snipp = this.toSnippet(word);
@@ -183,10 +174,8 @@ export class Global {
     }
 
     public queryExportSnippet(filename: vscode.Uri, word: string, all: boolean = true, lazy: boolean = false): any {
-        const rootFolder = vscode.workspace.getWorkspaceFolder(filename);
-        if (rootFolder && !this.cacheUpdates.get(rootFolder.uri.fsPath)) {
-            this.updateCache(rootFolder.uri.fsPath);
-        }
+        this.updateCacheIfNotUpdatedYet(filename);
+
         const prefix = lazy ? "" : "^";
         const suffix = all ? "" : "$";
         const snipp = this.toSnippet(word);
@@ -208,18 +197,11 @@ export class Global {
     }
     public getLanguageInfo(filename: vscode.Uri): ILanguageInfo {
 
-        const languageInfo: ILanguageInfo = {
-            language: "en",
-            name: filename.fsPath,
-        };
-
-        const rootFolder = vscode.workspace.getWorkspaceFolder(filename);
-        if (rootFolder) {
-            if (!this.cacheUpdates.get(rootFolder.uri.fsPath)) {
-                this.updateCache(rootFolder.uri.fsPath);
-                return languageInfo;
-            }
-        } else {
+        if (!this.updateCacheIfNotUpdatedYet(filename)) {
+            const languageInfo: ILanguageInfo = {
+                language: "en",
+                name: filename.fsPath,
+            };
             return languageInfo;
         }
 
@@ -232,7 +214,8 @@ export class Global {
         const re2Quotes = new RegExp(/("([^"]|"")*")/, "g");
         const re = new RegExp(/(<([^<]|<>)*>)/, "g");
         const reSpaces = new RegExp(/\s/, "g");
-        let result = stringLine.replace(re3Quotes, getsnippet ? "" : "''''''")
+        let result = stringLine
+                        .replace(re3Quotes, getsnippet ? "" : "''''''")
                         .replace(re1Quotes, getsnippet ? "" : "''")
                         .replace(re2Quotes, getsnippet ? "" : "\"\"")
                         .replace(re, getsnippet ? "" : "<>");
@@ -495,5 +478,18 @@ export class Global {
 
     private cacheUpdated(): boolean {
         return this.allCacheUpdated;
+    }
+
+    // return true if already updated and false for not
+    private updateCacheIfNotUpdatedYet(filename: vscode.Uri) {
+        const rootFolder = vscode.workspace.getWorkspaceFolder(filename);
+        if (!rootFolder) {
+            return false;
+        }
+        if (!this.cacheUpdates.get(rootFolder.uri.fsPath)) {
+            this.updateCache(rootFolder.uri.fsPath);
+            return false;
+        }
+        return true;
     }
 }
