@@ -1,3 +1,4 @@
+import * as path from "path";
 import * as vscode from "vscode";
 
 import { IMethodValue } from "../IMethodValue";
@@ -74,8 +75,9 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             // let result = this._global.queryExportSnippet(filename, snippet);
             let result = this._global.queryExportSnippet(filename, snippetFuzzy);
             result.forEach((value: IMethodValue, index: any, array: any) => {
-                const moduleDescription = "";
-                if (this.added[(moduleDescription + value.name).toLowerCase()] !== true) {
+                // const moduleDescription = "";
+                // if (this.added[(moduleDescription + value.name).toLowerCase()] !== true) {
+                if (this.added[value.id] !== true) {
                     const i = this.reverseIndex(snippet, value.name);
                     const item = new vscode.CompletionItem(value.name);
                     item.range = replaceRange;
@@ -87,18 +89,26 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                     // if (value.filename.length - 60 > 0) {
                     //     startFilename = value.filename.length - 60;
                     // }
-                    item.documentation = (value.description ? value.description : ""); // +
+                    // item.documentation = (value.description ? value.description : ""); // +
                     //                    "\n" + value.snippet + ":" + value.line;
+
+                    // const featureFilename = this.relativePath(vscode.Uri.file(value.filename));
+
+                    // item.documentation = (value.description ? value.description + "\n" : "");
+                    // item.documentation = (value.filename ? "Feature: " + featureFilename : "");
+                    item.documentation = this.makeDocumentation(value);
                     item.kind = vscode.CompletionItemKind.Interface;
                     item.label = value.name.substr(value.name.length - item.insertText.length);
                     bucket.push(item);
-                    this.added[(moduleDescription + value.name).toLowerCase()] = true;
+                    // this.added[(moduleDescription + value.name).toLowerCase()] = true;
+                    this.added[value.id] = true;
                 }
             });
 
             result = this._global.getCacheLocal(filename.fsPath, word, document.getText(), false);
             result.forEach((value: IMethodValue, index: any, array: any) => {
-                if (!this.added[value.name.toLowerCase()] === true) {
+                // if (!this.added[value.name.toLowerCase()] === true) {
+                if (!this.added[value.id] === true) {
                     if (value.name === word) { return; }
 
                     const i = this.reverseIndex(snippet, value.name);
@@ -108,20 +118,23 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                     item.filterText = value.name; // wordcomplite + value.snippet.toLowerCase() + " ";
                     item.range = replaceRange;
 
-                    item.documentation = value.description ? value.description : "";
+                    // item.documentation = value.description ? value.description : "";
+                    item.documentation = this.makeDocumentation(value);
                     item.kind = vscode.CompletionItemKind.Function;
                     item.label = value.name;
                     item.label = value.name.substr(value.name.length - item.insertText.length);
                     bucket.push(item);
-                    this.added[value.name.toLowerCase()] = true;
+                    // this.added[value.name.toLowerCase()] = true;
+                    this.added[value.id] = true;
                 }
             });
 
             result = this._global.querySnippet(filename, snippetFuzzy);
             // result = this._global.querySnippet(filename, word);
             result.forEach((value: IMethodValue, index: any, array: any) => {
-                const moduleDescription = "";
-                if (this.added[(moduleDescription + value.name).toLowerCase()] !== true) {
+                // const moduleDescription = "";
+                // if (this.added[(moduleDescription + value.name).toLowerCase()] !== true) {
+                if (this.added[value.id] !== true) {
                     const i = this.reverseIndex(snippet, value.name);
                     const item = new vscode.CompletionItem(value.name);
                     item.insertText = value.name; // value.name.substr(word.length);
@@ -136,17 +149,47 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                     // if (value.filename.length - 60 > 0) {
                     //     startFilename = value.filename.length - 60;
                     // }
-                    item.documentation = (value.description ? value.description : "");
-                    item.documentation = (value.filename ? "\nFeature: " + value.filename : "");
+
+                    // const featureFilename = this.relativePath(vscode.Uri.file(value.filename));
+
+                    // item.documentation = (value.description ? value.description + "\n" : "");
+                    // item.documentation = (value.filename ? "Feature: " + featureFilename : "");
+                    item.documentation = this.makeDocumentation(value);
                     item.kind = value.kind ? value.kind : vscode.CompletionItemKind.Field;
                     bucket.push(item);
-                    this.added[(moduleDescription + value.name).toLowerCase()] = true;
+                    // this.added[(moduleDescription + value.name).toLowerCase()] = true;
+                    this.added[value.id] = true;
                 }
             });
             resolve(bucket);
 
             return;
         });
+    }
+
+    private makeDocumentation(value: IMethodValue): string {
+        const featureFilename = this.relativePath(vscode.Uri.file(value.filename));
+        let documentation = (value.description ? value.description + "\n" : "");
+        documentation = (value.filename ? "Feature: " + featureFilename : "");
+        return documentation;
+    }
+
+    private relativePath(filename: vscode.Uri) {
+        const workspaceFolder = vscode.workspace.getWorkspaceFolder(filename);
+        let rootFolder: vscode.Uri = vscode.Uri.file(this._global.getRootPath());
+        if (workspaceFolder && workspaceFolder.uri) {
+            rootFolder = workspaceFolder.uri;
+        }
+
+        const relPath = path.relative(rootFolder.fsPath, filename.fsPath);
+
+        // // If the path leaves the current working directory, then we need to
+        // // resolve the absolute path so that the path can be properly matched
+        // // by minimatch (via multimatch)
+        // if (/^\.\.[\\/]/.test(relPath)) {
+        //     relPath = path.resolve(relPath);
+        // }
+        return relPath;
     }
 
     private addOffset(str: string, regexp: RegExp, offsetObj: IObjOffset): string {

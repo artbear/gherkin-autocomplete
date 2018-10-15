@@ -4,5 +4,6 @@
     ],
     "gherkin-autocomplete.srcBslPath": [
         "../lib"
-    ]
+    ],
+    "gherkin-autocomplete.featuresPath": "."
 }

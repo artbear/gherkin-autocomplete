@@ -85,16 +85,19 @@ describe("Completion", function() {
 
         const item = completions[0];
         item.label.should.be.equal(stepText, "label");
-        if (!item.kind || !item.insertText || !item.filterText || !item.range) {
+        if (!item.kind || !item.insertText || !item.filterText || !item.range
+                || !item.documentation) {
             should(item.kind).is.not.undefined();
             should(item.insertText).is.not.undefined();
             should(item.filterText).is.not.undefined();
             should(item.range).is.not.undefined();
+            should(item.documentation).is.not.undefined();
             return;
         }
         item.kind.should.be.equal(vscode.CompletionItemKind.Module);
         item.insertText.should.be.equal(stepText, "insertText");
         item.filterText.should.be.equal(stepText, "filterText");
+        item.documentation.should.be.equal("Feature: ..\\lib\\FEATURES\\Фича с пробелами.feature", "documentation");
         item.range.start.character.should.be.equal(2, "range.start.character");
         item.range.end.character.should.be.equal(position.character, "range.end.character");
 

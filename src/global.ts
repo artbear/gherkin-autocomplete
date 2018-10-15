@@ -94,7 +94,8 @@ export class Global {
             }
 
             if (rootPath) {
-                // let featuresPath = String(vscode.workspace.getConfiguration("gherkin-autocomplete").get("featuresPath"));
+                // let featuresPath = String(vscode.workspace.getConfiguration("gherkin-autocomplete")
+                // .get("featuresPath"));
                 let featuresPath = String(config.get("featuresPath"));
                 if (featuresPath) {
                     if (!(featuresPath.endsWith("/") || featuresPath.endsWith("\\"))) {
@@ -326,6 +327,7 @@ export class Global {
                 kind: vscode.CompletionItemKind.Module,
                 line: item.line,
                 name: item.name,
+                id: item.name.toLowerCase(),
                 snippet: item.snippet
             };
             ++count;
@@ -348,9 +350,10 @@ export class Global {
         if (descrMethodEntries) {
 
             const stepnames = new Array();
-            let matches;
-            while ((matches = re.exec(source)) !== null) {
+            let matches = re.exec(source);
+            while (matches  !== null) {
                 stepnames.push(matches[1]);
+                matches = re.exec(source);
             }
 
             const entries = methodsTable.find(
@@ -442,6 +445,7 @@ export class Global {
                         isexport: true,
                         line: child.location.line,
                         name: text,
+                        id: text.toLowerCase(),
                         snippet: this.toSnippet(text)
                     };
                     methods.insert(methRow);
@@ -459,6 +463,7 @@ export class Global {
                     isexport: false,
                     line: step.location.line,
                     name: this.toSnippet(text, false),
+                    id: this.toSnippet(text, false).toLowerCase(),
                     snippet: this.toSnippet(text)
                 };
 
