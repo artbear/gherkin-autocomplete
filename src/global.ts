@@ -81,37 +81,20 @@ export class Global {
         const config = this.getProductConfiguration();
         if (config) {
             const pathsLibrarys: string[] = config.get<string[]>("featureLibraries", []);
-                // vscode.workspace.getConfiguration("gherkin-autocomplete")
-                // get<string[]>("featureLibraries", []);
-            for (let library of pathsLibrarys) {
-                if (!(library.endsWith("/") || library.endsWith("\\"))) {
-                    library += "/";
-                }
-                library = path.resolve(rootPath, library);
-                this.findFilesForUpdate(library, "Feature libraries cache is built.");
-                this.findFilesBslForUpdate(library, "Bsl snippets search.");
-                this.findFilesBslForUpdate(library, "OneScript snippets search.", true);
+
+            for (const library of pathsLibrarys) {
+                this.findAllFilesForUpdate(library, rootPath, "Feature libraries cache is built.");
             }
 
             if (rootPath) {
-                // let featuresPath = String(vscode.workspace.getConfiguration("gherkin-autocomplete")
-                // .get("featuresPath"));
                 let featuresPath = String(config.get("featuresPath"));
-                if (featuresPath) {
-                    if (!(featuresPath.endsWith("/") || featuresPath.endsWith("\\"))) {
-                        featuresPath += "/";
-                    }
-                } else {
+                if (!featuresPath) {
                     // default path is rootPath + ./features
                     featuresPath = "./features";
                 }
-                featuresPath = path.resolve(rootPath, featuresPath);
-                this.findFilesForUpdate(featuresPath, "Features' cache is built.");
-                this.findFilesBslForUpdate(featuresPath, "Bsl snippets search.");
-                this.findFilesBslForUpdate(featuresPath, "OneScript snippets search.", true);
+                this.findAllFilesForUpdate(featuresPath, rootPath, "Features' cache is built.");
             }
 
-            // const bslsPaths: string[] = vscode.workspace.getConfiguration("gherkin-autocomplete")
             const bslsPaths: string[] = config.get<string[]>("srcBslPath", []);
             for (let blspath of bslsPaths) {
                 if (!(blspath.endsWith("/") || blspath.endsWith("\\"))) {
@@ -163,12 +146,9 @@ export class Global {
         const suffix = all ? "" : "$";
         const snipp = this.toSnippet(word);
         const snippFuzzy = this.toSnippet(word, false);
-        // const querystring = { snippet: { $regex: new RegExp(prefix + snipp + suffix, "i") } };
         const snippFuzzyRegPattern = snippFuzzy.replace(/\s/g, ".*");
         console.log("snippFuzzyRegPattern " + snippFuzzyRegPattern);
-        // const regPattern = prefix + "(" + snipp + ")|(" + snippFuzzyRegPattern + ")" + suffix;
         const regPattern = "(" + snipp + ")|(" + snippFuzzyRegPattern + ")";
-        // const regPattern = prefix + "^(" + snipp + ")|(я\s+дела\s+б)$" + suffix;
         const querystring = { snippet: { $regex: new RegExp(regPattern, "i") } };
         const search = this.db.chain().find(querystring).limit(15).simplesort("snippet").data();
         return search;
@@ -181,10 +161,6 @@ export class Global {
         const suffix = all ? "" : "$";
         const snipp = this.toSnippet(word);
         const querystring = { snippet: { $regex: new RegExp(prefix + snipp + suffix, "i") } };
-        /*const querystring = { "$and" : [
-            { snippet: { $regex: new RegExp(prefix + snipp + suffix, "i") } },
-            {isexport: { '$eq' : true }}
-        ] };*/
 
         function filterByExport(obj) {
             return obj.isexport;
@@ -262,6 +238,17 @@ export class Global {
     }
 
     // public findFilesForCache(_searchPattern: string, _rootPath: string) { } // tslint:disable-line:no-empty
+
+    private findAllFilesForUpdate(checkPathParam: string, rootPath: string, msg: string) {
+        if (!(checkPathParam.endsWith("/") || checkPathParam.endsWith("\\"))) {
+            checkPathParam += "/";
+        }
+        const checkPath = path.resolve(rootPath, checkPathParam);
+        this.findFilesForUpdate(checkPath, msg);
+        this.findFilesBslForUpdate(checkPath, "Bsl snippets search.");
+        this.findFilesBslForUpdate(checkPath, "OneScript snippets search.", true);
+        return checkPath;
+    }
 
     private findFilesForUpdate(library: string, successMessage: string): void {
         const globOptions: glob.IOptions = {};

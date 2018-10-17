@@ -72,42 +72,28 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             const snippet = this._global.toSnippet(word);
             const snippetFuzzy = this._global.toSnippet(word, false);
 
-            // let result = this._global.queryExportSnippet(filename, snippet);
             let result = this._global.queryExportSnippet(filename, snippetFuzzy);
             result.forEach((value: IMethodValue, index: any, array: any) => {
-                // const moduleDescription = "";
-                // if (this.added[(moduleDescription + value.name).toLowerCase()] !== true) {
+
                 if (this.added[value.id] !== true) {
                     const i = this.reverseIndex(snippet, value.name);
                     const item = new vscode.CompletionItem(value.name);
                     item.range = replaceRange;
                     item.insertText = value.name;
-                    // item.insertText = wordcomplite + value.name.substr(i + 1);
                     item.sortText = "3";
-                    item.filterText = value.name; // wordcomplite + value.snippet.toLowerCase() + " ";
-                    // let startFilename = 0;
-                    // if (value.filename.length - 60 > 0) {
-                    //     startFilename = value.filename.length - 60;
-                    // }
-                    // item.documentation = (value.description ? value.description : ""); // +
-                    //                    "\n" + value.snippet + ":" + value.line;
+                    item.filterText = value.name;
 
-                    // const featureFilename = this.relativePath(vscode.Uri.file(value.filename));
-
-                    // item.documentation = (value.description ? value.description + "\n" : "");
-                    // item.documentation = (value.filename ? "Feature: " + featureFilename : "");
                     item.documentation = this.makeDocumentation(value);
                     item.kind = vscode.CompletionItemKind.Interface;
-                    item.label = value.name; // value.name.substr(value.name.length - item.insertText.length);
+                    item.label = value.name;
+
                     bucket.push(item);
-                    // this.added[(moduleDescription + value.name).toLowerCase()] = true;
                     this.added[value.id] = true;
                 }
             });
 
             result = this._global.getCacheLocal(filename.fsPath, word, document.getText(), false);
             result.forEach((value: IMethodValue, index: any, array: any) => {
-                // if (!this.added[value.name.toLowerCase()] === true) {
                 if (!this.added[value.id] === true) {
                     if (value.name === word) { return; }
 
@@ -115,49 +101,34 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                     const item = new vscode.CompletionItem(value.name);
                     item.sortText = "0";
                     item.insertText = wordcomplite + value.name.substr(i + 1);
-                    item.filterText = value.name; // wordcomplite + value.snippet.toLowerCase() + " ";
+                    item.filterText = value.name;
                     item.range = replaceRange;
 
-                    // item.documentation = value.description ? value.description : "";
                     item.documentation = this.makeDocumentation(value);
                     item.kind = vscode.CompletionItemKind.Function;
                     item.label = value.name;
                     item.label = value.name.substr(value.name.length - item.insertText.length);
+
                     bucket.push(item);
-                    // this.added[value.name.toLowerCase()] = true;
                     this.added[value.id] = true;
                 }
             });
 
             result = this._global.querySnippet(filename, snippetFuzzy);
-            // result = this._global.querySnippet(filename, word);
             result.forEach((value: IMethodValue, index: any, array: any) => {
-                // const moduleDescription = "";
-                // if (this.added[(moduleDescription + value.name).toLowerCase()] !== true) {
                 if (this.added[value.id] !== true) {
                     const i = this.reverseIndex(snippet, value.name);
                     const item = new vscode.CompletionItem(value.name);
-                    item.insertText = value.name; // value.name.substr(word.length);
+                    item.insertText = value.name;
                     item.sortText = "0";
-                    // item.insertText = value.name.substr(i + 1);
-                    // item.insertText = wordcomplite + value.name.substr(i + 1);//TODO вставляет неверно
                     item.range = replaceRange;
 
-                    item.filterText = value.name; // wordcomplite + value.snippet.toLowerCase() + " ";
+                    item.filterText = value.name;
                     item.label = value.name;
-                    // let startFilename = 0;
-                    // if (value.filename.length - 60 > 0) {
-                    //     startFilename = value.filename.length - 60;
-                    // }
-
-                    // const featureFilename = this.relativePath(vscode.Uri.file(value.filename));
-
-                    // item.documentation = (value.description ? value.description + "\n" : "");
-                    // item.documentation = (value.filename ? "Feature: " + featureFilename : "");
                     item.documentation = this.makeDocumentation(value);
                     item.kind = value.kind ? value.kind : vscode.CompletionItemKind.Field;
+
                     bucket.push(item);
-                    // this.added[(moduleDescription + value.name).toLowerCase()] = true;
                     this.added[value.id] = true;
                 }
             });
@@ -183,12 +154,12 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
 
         const relPath = path.relative(rootFolder.fsPath, filename.fsPath);
 
-        // // If the path leaves the current working directory, then we need to
-        // // resolve the absolute path so that the path can be properly matched
-        // // by minimatch (via multimatch)
-        // if (/^\.\.[\\/]/.test(relPath)) {
-        //     relPath = path.resolve(relPath);
-        // }
+            // // If the path leaves the current working directory, then we need to
+            // // resolve the absolute path so that the path can be properly matched
+            // // by minimatch (via multimatch)
+            // // if (/^\.\.[\\/]/.test(relPath)) {
+            // //    relPath = path.resolve(relPath);
+            // // }
         return relPath;
     }
 
