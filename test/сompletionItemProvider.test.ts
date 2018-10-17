@@ -34,7 +34,7 @@ async function getCompletionListFromCurrentPosition(): Promise<vscode.Completion
 describe("Completion", function() {
     let backuper: TextBackuper;
     let activeTextEditor: vscode.TextEditor | undefined;
-    const stepText = "я вижу консоль";
+    let stepText = "я вижу консоль";
 
     this.timeout(15000);
     backuper = new TextBackuper();
@@ -57,15 +57,20 @@ describe("Completion", function() {
     });
 
     it("should show completions list for fuzzy eq", async () => {
-        await checkCompletion(" консол");
+        await checkCompletion(" И консол");
     });
 
     it("should show completions list for left eq", async () => {
-        await checkCompletion(" я вижу");
+        await checkCompletion(" И я вижу");
     });
 
     it("should show completions list for full eq", async () => {
-        await checkCompletion(" я вижу консоль");
+        await checkCompletion(" И я вижу консоль");
+    });
+
+    it("should show completions list for fuzzy eq export scenarios", async () => {
+        stepText = "Специальный экспортный сценарий";
+        await checkCompletion(" И Специальный экспортный");
     });
 
     async function checkCompletion(addedText: string) {
@@ -84,22 +89,26 @@ describe("Completion", function() {
         completions.should.have.length(1, "wrong completions length");
 
         const item = completions[0];
-        item.label.should.be.equal(stepText, "label");
         if (!item.kind || !item.insertText || !item.filterText || !item.range
-                || !item.documentation) {
-            should(item.kind).is.not.undefined();
-            should(item.insertText).is.not.undefined();
-            should(item.filterText).is.not.undefined();
-            should(item.range).is.not.undefined();
-            should(item.documentation).is.not.undefined();
-            return;
-        }
-        item.kind.should.be.equal(vscode.CompletionItemKind.Module);
+            || !item.documentation) {
+                should(item.kind).is.not.undefined();
+                should(item.insertText).is.not.undefined();
+                should(item.filterText).is.not.undefined();
+                should(item.range).is.not.undefined();
+                should(item.documentation).is.not.undefined();
+                return;
+            }
+
         item.insertText.should.be.equal(stepText, "insertText");
         item.filterText.should.be.equal(stepText, "filterText");
+        item.label.should.be.equal(stepText, "label");
         item.documentation.should.be.equal("Feature: ..\\lib\\FEATURES\\Фича с пробелами.feature", "documentation");
         item.range.start.character.should.be.equal(2, "range.start.character");
         item.range.end.character.should.be.equal(position.character, "range.end.character");
+        item.kind.should.be.equalOneOf([
+            vscode.CompletionItemKind.Module,
+            vscode.CompletionItemKind.Interface]
+        );
 
     }
 

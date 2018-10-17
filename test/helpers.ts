@@ -34,9 +34,22 @@ export async function insertCursorAtEndOfFile() {
     if (activeTextEditor) {
         await activeTextEditor.edit((editBuilder: vscode.TextEditorEdit) => {
             const lastLine = activeTextEditor.document.lineAt(activeTextEditor.document.lineCount - 1);
-            activeTextEditor.selection = new vscode.Selection(lastLine.range.end, lastLine.range.end);
+            activeTextEditor.selection = new vscode.Selection(lastLine.range.start, lastLine.range.end);
 
             editBuilder.delete(activeTextEditor.selection);
+        });
+    }
+}
+
+// TODO не проверено!
+export async function replaceLastLine(text: string) {
+    const activeTextEditor = vscode.window.activeTextEditor;
+    if (activeTextEditor) {
+        await activeTextEditor.edit((editBuilder: vscode.TextEditorEdit) => {
+            const lastLine = activeTextEditor.document.lineAt(activeTextEditor.document.lineCount - 1);
+            const range
+                = new vscode.Range(new vscode.Position(lastLine.lineNumber, 0), activeTextEditor.selection.anchor);
+            editBuilder.replace(range, text);
         });
     }
 }

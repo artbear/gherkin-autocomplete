@@ -82,7 +82,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                     const item = new vscode.CompletionItem(value.name);
                     item.range = replaceRange;
                     item.insertText = value.name;
-                    item.insertText = wordcomplite + value.name.substr(i + 1);
+                    // item.insertText = wordcomplite + value.name.substr(i + 1);
                     item.sortText = "3";
                     item.filterText = value.name; // wordcomplite + value.snippet.toLowerCase() + " ";
                     // let startFilename = 0;
@@ -98,7 +98,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                     // item.documentation = (value.filename ? "Feature: " + featureFilename : "");
                     item.documentation = this.makeDocumentation(value);
                     item.kind = vscode.CompletionItemKind.Interface;
-                    item.label = value.name.substr(value.name.length - item.insertText.length);
+                    item.label = value.name; // value.name.substr(value.name.length - item.insertText.length);
                     bucket.push(item);
                     // this.added[(moduleDescription + value.name).toLowerCase()] = true;
                     this.added[value.id] = true;
