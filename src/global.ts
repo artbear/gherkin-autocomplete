@@ -384,6 +384,7 @@ export class Global {
             this.dbsnippets.insert(newItem);
         }
     }
+
     private parseFeature(source: string, filename: string): any {
 
         const lockdb = new loki("loki.json");
@@ -422,22 +423,19 @@ export class Global {
         }
 
         for (const child of children) {
-            if (isExport) {
-                if (!(child.name.length === 0 || !child.name.trim())) {
-                    const text: string = child.name;
-                    const methRow: IMethodValue = {
-                        description: text,
-                        endline: child.location.line,
-                        filename,
-                        isexport: true,
-                        line: child.location.line,
-                        name: text,
-                        id: text.toLowerCase(),
-                        snippet: this.toSnippet(text)
-                    };
-                    methods.insert(methRow);
-                }
-                // continue;
+            if (isExport && !(child.name.length === 0 || !child.name.trim())) {
+                const text: string = child.name;
+                const methRow: IMethodValue = {
+                    description: text,
+                    endline: child.location.line,
+                    filename,
+                    isexport: true,
+                    line: child.location.line,
+                    name: text,
+                    id: text.toLowerCase(),
+                    snippet: this.toSnippet(text)
+                };
+                methods.insert(methRow);
             }
             const steps = child.steps;
 
