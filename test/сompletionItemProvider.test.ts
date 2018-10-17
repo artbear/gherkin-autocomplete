@@ -34,7 +34,10 @@ async function getCompletionListFromCurrentPosition(): Promise<vscode.Completion
 describe("Completion", function() {
     let backuper: TextBackuper;
     let activeTextEditor: vscode.TextEditor | undefined;
-    let stepText = "я вижу консоль";
+    const libStepText = "я вижу консоль";
+    const exportScenarioStepText = "Специальный экспортный сценарий";
+    const innerStepText = "существующий внутренний шаг";
+    const innerDocText = "Feature: test.feature";
 
     this.timeout(15000);
     backuper = new TextBackuper();
@@ -57,42 +60,66 @@ describe("Completion", function() {
     });
 
     it("should show completions list for fuzzy eq", async () => {
-        await checkCompletion(" И консол");
+        await checkCompletion(" И консол", libStepText, "");
+    });
+
+    it("should show completions list for fuzzy eq with spaces", async () => {
+        await checkCompletion(" И жу онс", libStepText, "");
     });
 
     it("should show completions list for left eq", async () => {
-        await checkCompletion(" И я вижу");
+        await checkCompletion(" И я вижу", libStepText, "");
     });
 
     it("should show completions list for full eq", async () => {
-        await checkCompletion(" И я вижу консоль");
+        await checkCompletion(" И я вижу консоль", libStepText, "");
     });
 
     it("should show completions list for fuzzy eq export scenarios", async () => {
-        stepText = "Специальный экспортный сценарий";
-        await checkCompletion(" И экспорт");
+        await checkCompletion(" И экспорт", exportScenarioStepText, "");
+    });
+
+    it("should show completions list for fuzzy eq with spaces export scenarios", async () => {
+        await checkCompletion(" И пец кспорт", exportScenarioStepText, "");
     });
 
     it("should show completions list for left eq export scenarios", async () => {
-        await checkCompletion(" И Специальный экспортный");
+        await checkCompletion(" И Специальный экспортный", exportScenarioStepText, "");
     });
 
     it("should show completions list for full eq export scenarios", async () => {
-        await checkCompletion(" И Специальный экспортный сценарий");
+        await checkCompletion(" И Специальный экспортный сценарий", exportScenarioStepText, "");
     });
 
-    async function checkCompletion(addedText: string) {
+    it("should show completions list for fuzzy eq for inner step", async () => {
+        await checkCompletion(" И внутрен", innerStepText, innerDocText);
+    });
+
+    it("should show completions list for fuzzy eq with spaces for inner step", async () => {
+        await checkCompletion(" И ущест нутрен", innerStepText, innerDocText);
+    });
+
+    it("should show completions list for left eq for inner step", async () => {
+        await checkCompletion(" И существующий внутренний", innerStepText, innerDocText);
+    });
+
+    it("should show completions list for full eq for inner step", async () => {
+        await checkCompletion(" И существующий внутренний шаг", innerStepText, innerDocText);
+    });
+
+    it("should show wrong completions list", async () => {
+        await checkWrongCompletion(" И несуществующий", innerStepText, innerDocText);
+    });
+
+    async function checkCompletion(addedText: string, stepText: string, documentation: string) {
 
         if (!activeTextEditor) {
             Object(null).should.not.null("activeTextEditor");
             return;
         }
 
-        await addText(addedText);
+        const completions = await getCompletion(addedText);
         const position = activeTextEditor.selection.anchor;
-
-        const completionList = await getCompletionListFromCurrentPosition();
-        const completions = completionList.items;
 
         completions.should.have.length(1, "wrong completions length");
 
@@ -110,14 +137,38 @@ describe("Completion", function() {
         item.insertText.should.be.equal(stepText, "insertText");
         item.filterText.should.be.equal(stepText, "filterText");
         item.label.should.be.equal(stepText, "label");
-        item.documentation.should.be.equal("Feature: ..\\lib\\FEATURES\\Фича с пробелами.feature", "documentation");
         item.range.start.character.should.be.equal(2, "range.start.character");
         item.range.end.character.should.be.equal(position.character, "range.end.character");
         item.kind.should.be.equalOneOf([
             vscode.CompletionItemKind.Module,
             vscode.CompletionItemKind.Interface]
         );
+        if (documentation.length === 0) {
+            documentation = "Feature: ..\\lib\\FEATURES\\Фича с пробелами.feature";
+        }
+        item.documentation.should.be.equal(documentation, "documentation");
 
+    }
+
+    async function checkWrongCompletion(addedText: string, stepText: string, documentation: string) {
+
+        const completions = await getCompletion(addedText);
+        completions.should.not.have.length(1, "wrong completions length");
+    }
+
+    async function getCompletion(addedText: string):
+        Promise<vscode.CompletionItem[]> {
+
+        if (!activeTextEditor) {
+            Object(null).should.not.null("activeTextEditor");
+            return [new vscode.CompletionItem("")];
+        }
+
+        await addText(addedText);
+
+        const completionList = await getCompletionListFromCurrentPosition();
+        const completions = completionList.items;
+        return completions;
     }
 
 });
