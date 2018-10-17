@@ -70,7 +70,15 @@ describe("Completion", function() {
 
     it("should show completions list for fuzzy eq export scenarios", async () => {
         stepText = "Специальный экспортный сценарий";
+        await checkCompletion(" И экспорт");
+    });
+
+    it("should show completions list for left eq export scenarios", async () => {
         await checkCompletion(" И Специальный экспортный");
+    });
+
+    it("should show completions list for full eq export scenarios", async () => {
+        await checkCompletion(" И Специальный экспортный сценарий");
     });
 
     async function checkCompletion(addedText: string) {
