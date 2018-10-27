@@ -70,14 +70,12 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             );
             console.log("compiler for <" + word + "> - filter <" + wordcomplite + ">");
 
-            const snippet = this._global.toSnippet(word);
             const snippetFuzzy = this._global.toSnippet(word, false);
 
             let result = this._global.queryExportSnippet(filename, snippetFuzzy);
             result.forEach((value: IMethodValue, index: any, array: any) => {
 
                 if (this.added[value.id] !== true) {
-                    // const i = this.reverseIndex(snippet, value.name);
                     const item = new vscode.CompletionItem(value.name);
                     item.range = replaceRange;
                     item.insertText = value.name;
@@ -96,9 +94,8 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             result = this._global.getCacheLocal(filename.fsPath, word, document.getText(), false, true, false);
             result.forEach((value: IMethodValue, index: any, array: any) => {
                 if (!this.added[value.id] === true) {
-                    if (value.name === word) { return; }
+                    if (value.name === word) { return; } // TODO
 
-                    // const i = this.reverseIndex(snippet, value.name);
                     const item = new vscode.CompletionItem(value.name);
                     item.sortText = "0";
                     item.insertText = value.name;
@@ -118,8 +115,6 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             result = this._global.querySnippet(filename, snippetFuzzy);
             result.forEach((value: IMethodValue, index: any, array: any) => {
                 if (this.added[value.id] !== true) {
-                    // if (value.name === word) { return; }
-                    // const i = this.reverseIndex(snippet, value.name);
                     const item = new vscode.CompletionItem(value.name);
                     item.insertText = value.name;
                     item.sortText = "0";
@@ -165,54 +160,6 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
         return relPath;
     }
 
-    private addOffset(str: string, regexp: RegExp, offsetObj: IObjOffset): string {
-        let m;
-        m = regexp.exec(str);
-        if (m !== null) {
-            offsetObj.offset = offsetObj.offset + m[0].length;
-            str = str.substr(offsetObj.index + offsetObj.offset);
-        }
-        return str;
-    }
-    private  reverseIndex(snippet: string, fullSnippetString: string): number {
-        const indexString: number = snippet.length - 1;
-        const indexFull: number = fullSnippetString.length - 1;
-        let i = 0;
-        let offsetBase = 0;
-        const re3Quotes = new RegExp(/^('''([^''']|'''''')*''')/, "i");
-        const re1Quotes = new RegExp(/^('([^']|'')*')/, "i");
-        const re2Quotes = new RegExp(/^("([^"]|"")*")/, "i");
-        const re = new RegExp(/^(<([^<]|<>)*>)/, "i");
-        const reSpaces = new RegExp(/^\s/, "i");
-        const reWord = new RegExp(/\w|[а-яїєґ]/, "i");
-        while (i < indexString) {
-            const offsetObj: IObjOffset = {
-                index: i,
-                offset: offsetBase
-            };
-            while (
-                (reWord.exec(fullSnippetString.charAt(offsetObj.index + offsetObj.offset)) == null)
-                || (offsetObj.index + offsetObj.offset >= indexFull)
-                ) {
-                [reSpaces, re3Quotes, re1Quotes, re2Quotes, re].forEach((regElement) => {
-                    this.addOffset(fullSnippetString.substr(
-                        offsetObj.index + offsetObj.offset), regElement, offsetObj);
-                });
-                i = offsetObj.index;
-                offsetBase = offsetObj.offset;
-            }
-
-            const char = snippet.charAt(i).toLowerCase();
-            const baseStr = fullSnippetString.charAt(i + offsetBase).toLowerCase();
-            if (char === baseStr) {
-                i ++;
-                continue;
-            } else {
-                break;
-            }
-        }
-        return i + offsetBase;
-    }
 }
 
 interface IObjOffset {
