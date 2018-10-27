@@ -39,7 +39,7 @@ describe("Completion", function() {
     const innerStepText = "существующий внутренний шаг";
     const innerDocText = "Feature: test.feature";
 
-    this.timeout(15000);
+    this.timeout(90000);
     backuper = new TextBackuper();
 
     before(async () => {
@@ -64,6 +64,7 @@ describe("Completion", function() {
     });
 
     it("should show completions list for fuzzy eq with spaces", async () => {
+        // TODO тест падает await checkCompletion(" И в к", libStepText, "");
         await checkCompletion(" И жу онс", libStepText, "");
     });
 
@@ -141,6 +142,7 @@ describe("Completion", function() {
         item.range.end.character.should.be.equal(position.character, "range.end.character");
         item.kind.should.be.equalOneOf([
             vscode.CompletionItemKind.Module,
+            vscode.CompletionItemKind.Function,
             vscode.CompletionItemKind.Interface]
         );
         if (documentation.length === 0) {

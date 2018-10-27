@@ -18,6 +18,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
         return item;
     }
 
+    // tslint:disable-next-line:cognitive-complexity TODO
     public provideCompletionItems(
         document: vscode.TextDocument,
         position: vscode.Position,
@@ -76,7 +77,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             result.forEach((value: IMethodValue, index: any, array: any) => {
 
                 if (this.added[value.id] !== true) {
-                    const i = this.reverseIndex(snippet, value.name);
+                    // const i = this.reverseIndex(snippet, value.name);
                     const item = new vscode.CompletionItem(value.name);
                     item.range = replaceRange;
                     item.insertText = value.name;
@@ -92,15 +93,15 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                 }
             });
 
-            result = this._global.getCacheLocal(filename.fsPath, word, document.getText(), false);
+            result = this._global.getCacheLocal(filename.fsPath, word, document.getText(), false, true, false);
             result.forEach((value: IMethodValue, index: any, array: any) => {
                 if (!this.added[value.id] === true) {
                     if (value.name === word) { return; }
 
-                    const i = this.reverseIndex(snippet, value.name);
+                    // const i = this.reverseIndex(snippet, value.name);
                     const item = new vscode.CompletionItem(value.name);
                     item.sortText = "0";
-                    item.insertText = wordcomplite + value.name.substr(i + 1);
+                    item.insertText = value.name;
                     item.filterText = value.name;
                     item.range = replaceRange;
 
@@ -117,7 +118,8 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             result = this._global.querySnippet(filename, snippetFuzzy);
             result.forEach((value: IMethodValue, index: any, array: any) => {
                 if (this.added[value.id] !== true) {
-                    const i = this.reverseIndex(snippet, value.name);
+                    // if (value.name === word) { return; }
+                    // const i = this.reverseIndex(snippet, value.name);
                     const item = new vscode.CompletionItem(value.name);
                     item.insertText = value.name;
                     item.sortText = "0";
@@ -126,7 +128,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                     item.filterText = value.name;
                     item.label = value.name;
                     item.documentation = this.makeDocumentation(value);
-                    item.kind = value.kind ? value.kind : vscode.CompletionItemKind.Field;
+                    item.kind = vscode.CompletionItemKind.Function;
 
                     bucket.push(item);
                     this.added[value.id] = true;
