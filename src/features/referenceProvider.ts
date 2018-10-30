@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import AbstractProvider from "./abstractProvider";
 // tslint:disable-next-line:ordered-imports
-import { IMethodValue, ILanguageInfo, IBslMethodValue } from "../IMethodValue";
+import { IMethodValue, IBslMethodValue } from "../IMethodValue";
 
 const Gherkin = require("gherkin");
 const parser = new Gherkin.Parser();
@@ -42,7 +42,7 @@ export default class GlobalReferenceProvider extends AbstractProvider implements
                              position: vscode.Position): Thenable<vscode.Location[]> {
         return new Promise((resolve) => {
             const filename = document.fileName;
-            const workspaceRoot = vscode.workspace.rootPath;
+            // const workspaceRoot = vscode.workspace.rootPath;
 
             const results: vscode.Location[] = Array<vscode.Location>();
 

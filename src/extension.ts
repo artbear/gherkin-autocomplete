@@ -4,6 +4,7 @@ import * as vscode from "vscode";
 import CompletionCodeLensProvider from "./features/competionLensProvider";
 import CompletionItemProvider from "./features/completionItemProvider";
 import ReferenceProvider from "./features/referenceProvider";
+import * as vscAdapter from "./vscAdapter";
 
 import { Global } from "./global";
 
@@ -11,7 +12,8 @@ import { Global } from "./global";
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
-    const global = new Global("global");
+    const global = Global.create(vscAdapter);
+
     context.subscriptions.push(
         vscode.languages.registerCompletionItemProvider(["feature", "gherkin"], new CompletionItemProvider(global), ".")
         // vscode.languages.registerDefinitionProvider
@@ -21,8 +23,8 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(vscode.commands.registerCommand("gherkin-autocomplete.update", () => {
-        updateCacheForAll(global);
-        //vscode.commands.executeCommand("vscode.executeReferenceProvider", )
+        global.updateCacheForAll();
+        // vscode.commands.executeCommand("vscode.executeReferenceProvider", )
     }));
 
     context.subscriptions.push(
@@ -34,15 +36,6 @@ export function activate(context: vscode.ExtensionContext) {
             global.updateCacheOfTextDocument(document.uri);
     }));
 
-    updateCacheForAll(global);
-    
-}
+    global.updateCacheForAll();
 
-function updateCacheForAll(global) {
-
-    if (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length > 0) {
-        vscode.workspace.workspaceFolders.forEach(element => {
-            global.updateCache(element.uri.fsPath);
-        });
-    }
 }
