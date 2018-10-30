@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 export interface IMethodValue {
 
     name: string;
+    id: string;
 
     snippet: string;
 
