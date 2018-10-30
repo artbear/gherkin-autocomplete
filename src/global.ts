@@ -147,8 +147,9 @@ export class Global {
         const snipp = this.toSnippet(word);
         const snippFuzzy = this.toSnippet(word, false);
         const snippFuzzyRegPattern = snippFuzzy.replace(/\s/g, ".*");
-        console.log("snippFuzzyRegPattern " + snippFuzzyRegPattern);
+        console.log("querySnippet snippFuzzyRegPattern " + snippFuzzyRegPattern);
         const regPattern = "(" + snipp + ")|(" + snippFuzzyRegPattern + ")";
+        console.log("querySnippet regPattern " + regPattern);
         const querystring = { snippet: { $regex: new RegExp(regPattern, "i") } };
         const search = this.db.chain().find(querystring).limit(15).simplesort("snippet").data();
         return search;

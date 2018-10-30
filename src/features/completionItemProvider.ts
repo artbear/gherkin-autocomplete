@@ -68,7 +68,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                 document.getText(
                     new vscode.Range(wordRange.start, position)
             );
-            console.log("compiler for <" + word + "> - filter <" + wordcomplite + ">");
+            console.log("compiler for <" + word + "> - wordcomplite <" + wordcomplite + ">");
 
             const snippetFuzzy = this._global.toSnippet(word, false);
 
@@ -81,10 +81,10 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
                     item.insertText = value.name;
                     item.sortText = "3";
                     item.filterText = value.name;
+                    console.log("queryExportSnippet value.name " + value.name);
 
                     item.documentation = this.makeDocumentation(value);
                     item.kind = vscode.CompletionItemKind.Interface;
-                    item.label = value.name;
 
                     bucket.push(item);
                     this.added[value.id] = true;
@@ -93,7 +93,7 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
 
             result = this._global.getCacheLocal(filename.fsPath, word, document.getText(), false, true, false);
             result.forEach((value: IMethodValue, index: any, array: any) => {
-                if (!this.added[value.id] === true) {
+                if (this.added[value.id] !== true) {
                     if (value.name === word) { return; } // TODO
 
                     const item = new vscode.CompletionItem(value.name);
@@ -104,8 +104,6 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
 
                     item.documentation = this.makeDocumentation(value);
                     item.kind = vscode.CompletionItemKind.Function;
-                    item.label = value.name;
-                    item.label = value.name.substr(value.name.length - item.insertText.length);
 
                     bucket.push(item);
                     this.added[value.id] = true;
@@ -115,13 +113,15 @@ export default class GlobalCompletionItemProvider extends AbstractProvider imple
             result = this._global.querySnippet(filename, snippetFuzzy);
             result.forEach((value: IMethodValue, index: any, array: any) => {
                 if (this.added[value.id] !== true) {
+                    // TODO if (value.name === word && filename.fsPath === value.filename) {
+                    //     return;
+                    // }
                     const item = new vscode.CompletionItem(value.name);
                     item.insertText = value.name;
                     item.sortText = "0";
                     item.range = replaceRange;
 
                     item.filterText = value.name;
-                    item.label = value.name;
                     item.documentation = this.makeDocumentation(value);
                     item.kind = vscode.CompletionItemKind.Function;
 
